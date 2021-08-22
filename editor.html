@@ -1,0 +1,229 @@
+{@
+	if($colorset == 'auto'):
+		$colorset = (\Rhymix\Framework\UA::getColorScheme()) ?: $colorset;
+	endif;
+}
+
+<load target="../../tpl/js/editor_common.js" />
+<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
+<link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css" />
+<link rel="stylesheet" type="text/css" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.css">
+<link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
+<link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css" />
+<div id="toastui_wrapper_{$editor_sequence}" class="rx_toastui_wrapper">
+	<div id="toastui_instance_{$editor_sequence}" class="rx_toastui {$colorset}"
+        data-editor-sequence="{$editor_sequence}"
+        data-editor-primary-key-name="{$editor_primary_key_name}"
+        data-editor-content-key-name="{$editor_content_key_name}"
+        data-editor-height="{$editor_height}">
+	</div>
+	<!--@if($allow_fileupload)-->
+		<include target="../ckeditor/file_upload.html" />
+	<!--@endif-->
+</div>
+<div id="editor"></div>
+{@ debugPrint(Context::getLangType()); }
+<script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
+<script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.js"></script>
+<script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
+<script src="https://uicdn.toast.com/editor/latest/i18n/ko-kr.js"></script>
+<script>
+	var rx_colorset = '{$colorset}';
+	if(rx_colorset == 'auto')
+	{
+		if($("body").hasClass("color_scheme_dark"))
+		{
+			rx_colorset = 'dark';
+		}
+		else
+		{
+			rx_colorset = 'light';
+		}
+	}
+
+	// Save the cursor position.
+	var ranges = [];
+	var saveSelection = function() {
+		var sel = window.getSelection();
+		ranges = [];
+		if (sel.getRangeAt && sel.rangeCount) {
+			for (let i = 0; i < sel.rangeCount; i++) {
+				ranges.push(sel.getRangeAt(i));
+			}
+		}
+	};
+
+	// Force <p> as paragraph separator.
+	document.execCommand('defaultParagraphSeparator', false, 'p');
+
+    if(editor == undefined) var editor = [];
+    if(editor_selector == undefined) var editor_selector = [];
+
+    editor_selector['{$editor_sequence}'] = $('#toastui_instance_{$editor_sequence}');
+
+	var content_key = editor_selector['{$editor_sequence}'].data('editor-content-key-name');
+	var insert_form = editor_selector['{$editor_sequence}'].closest('form');
+    var content_input = insert_form.find('input,textarea').filter('[name=' + content_key + ']');
+
+    editor['{$editor_sequence}'] = new toastui.Editor({
+        el: document.querySelector('#toastui_instance_{$editor_sequence}'),
+        height: '{$editor_height}px',
+        initialValue: content_input.val(),
+        initialEditType: 'wysiwyg',
+        theme: rx_colorset,
+        language: 'ko-KR',
+		toolbarItems: [
+			['heading', 'bold', 'italic', 'strike'],
+			['hr', 'quote'],
+			['ul', 'ol', 'task', 'indent', 'outdent'],
+			['table', 'code', 'codeblock']
+		],
+		plugins: [toastui.Editor.plugin.colorSyntax]
+		// customHTMLSanitizer: html => {
+		// 	console.log('san');
+		// 	console.log(html);
+		// 	return html;
+		// },
+		// customHTMLRenderer:  {
+		// 	heading(node, context) {
+		// 		console.log('heading');
+		// 		console.log(context);
+		// 		return {
+		// 			type: context.entering ? 'openTag' : 'closeTag',
+		// 			tagName: 'div',
+		// 			classNames: [`heading-'${node.level}`]
+		// 		}
+		// 	},
+		// 	text(node, context) {
+		// 		console.log('text');
+		// 		console.log(context);
+		// 		const strongContent = node.parent.type === 'strong';
+		// 		return {
+		// 			type: 'text',
+		// 			content: strongContent ? node.literal.toUpperCase() : node.literal
+		// 		}
+		// 	},
+		// 	linebreak(node, context) {
+		// 		console.log('heading');
+		// 		console.log(context);
+		// 		return {
+		// 			type: 'html',
+		// 			content: '\n<br />\n'
+		// 		}
+		// 	}
+		// }
+    });
+
+	editor['{$editor_sequence}'].removeHook("addImageBlobHook");
+	editor['{$editor_sequence}'].addHook("addImageBlobHook", (blob, callback) => {
+        //   (async () => {
+        //     let formData = new FormData();
+        //     formData.append("file", blob);
+
+        //     axios.defaults.withCredentials = true;
+        //     const { data: url } = await axios.post(
+        //       `${backUrl}image.do`,
+        //       formData,
+        //       {
+        //         header: { "content-type": "multipart/formdata" },
+        //       }
+        //     );
+        //     callback(url, "alt text");
+        //   })();
+
+		  alert('blob upload는 지원하지 않습니다');
+
+          return false;
+        });
+
+    editor_selector['{$editor_sequence}'].focusout(function() {
+        var editor_value = editor_selector['{$editor_sequence}'].find('.ProseMirror.toastui-editor-contents').html();
+        $('[name=content]').val(editor_value);
+    });
+
+	editor_selector['{$editor_sequence}'].bind('mouseup keyup', function() {
+		saveSelection();
+	});
+
+	(function(){
+		saveSelection();
+	})
+
+    // Simplify HTML content by removing unnecessary tags.
+	var simplifyContent = function(str) {
+		str = String(str);
+		str = str.replace(/<!--(.*?)-->/gs, '');
+		str = str.replace(/<\/?(\?xml|meta|link|font|span|style|script|noscript|frame|noframes|(?:st1|o):[a-z0-9]+)\b[^>]*?>/ig, '');
+		str = str.replace(/\b(id|class|style|on(?:[a-z0-9]+)|Mso(?:[a-z0-9]+))="[^"]*"/ig, '');
+		str = str.replace(/(<\/?)div(\W)/g, '$1p$2');
+		if (!str.match(/<\/?p>/)) {
+			str = '<p>' + str + '</p>';
+		}
+		return str;
+	};
+
+    // Convert YouTube links.
+	var convertYouTube = function(str) {
+		var regexp = /https?:\/\/(www\.youtube(?:-nocookie)?\.com\/(?:watch\?v=|v\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)\S*/g;
+		var embed = '<iframe width="560" height="315" src="https://www.youtube.com/embed/$2" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><p></p>';
+		return String(str).replace(regexp, embed);
+	};
+
+    // Insert content at cursor position.
+	var insertContent = function(instance, content) {
+		if (content.match(/<(audio|video)\b[^>]+>(<\/p>)?/)) {
+			content = content + '<p><br></p>';
+		}
+
+		if (ranges.length) {
+			var range = ranges[0];
+			range.collapse(false);
+			ranges = [];
+		} else {
+			var range = document.createRange();
+			range.selectNodeContents(instance.get(0));
+			range.collapse(false);
+		}
+		var sel = window.getSelection();
+		sel.removeAllRanges();
+		sel.addRange(range);
+
+		console.log(content);
+		
+        range.insertNode(range.createContextualFragment(content));
+		range.collapse(false);
+	};
+
+    // Simulate CKEditor for file upload integration.
+	window._getCkeInstance = function(editor_sequence) {
+		var instance = editor[editor_sequence];
+		return {
+			getData: function() {
+				return String(instance.getHTML());
+			},
+			setData: function(content) {
+				instance.setHTML(content);
+			},
+			insertHtml: function(content) {
+				insertContent(instance, content);
+			}
+		};
+	};
+
+    editor_selector['{$editor_sequence}'].bind('paste', function(event) {
+		return;
+
+        var clipboard_data = (event.clipboardData || window.clipboardData || event.originalEvent.clipboardData);
+        if (typeof clipboard_data !== 'undefined') {
+            var content = clipboard_data.getData('text/html');
+            if (content === '') {
+                content = clipboard_data.getData('text');
+            }
+        } else {
+            return;
+        }
+        content = convertYouTube(simplifyContent(content));
+        insertContent(editor['{$editor_sequence}'], content);
+        event.preventDefault();
+    });
+</script>
