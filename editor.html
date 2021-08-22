@@ -11,6 +11,13 @@
 <link rel="stylesheet" type="text/css" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.css">
 <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css" />
+<style>
+	.ProseMirror.toastui-editor-contents p{
+		line-height: {$content_line_height};
+		font-size: {$content_font_size};
+		<!--@if($content_font)-->font-family: {$content_font};<!--@endif-->
+	}
+</style>
 <div id="toastui_wrapper_{$editor_sequence}" class="rx_toastui_wrapper">
 	<div id="toastui_instance_{$editor_sequence}" class="rx_toastui {$colorset}"
         data-editor-sequence="{$editor_sequence}"
@@ -23,7 +30,6 @@
 	<!--@endif-->
 </div>
 <div id="editor"></div>
-{@ debugPrint(Context::getLangType()); }
 <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
 <script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.js"></script>
 <script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
@@ -66,6 +72,11 @@
 	var insert_form = editor_selector['{$editor_sequence}'].closest('form');
     var content_input = insert_form.find('input,textarea').filter('[name=' + content_key + ']');
 
+	insert_form.on('submit', function(){
+		var n_value = content_input.val().replace(/\<p\>(.*?)\<\/p\>/g,'<p style="font-size:{$content_font_size};line-height:{$content_line_height};<!--@if($content_font)-->font-family:{$content_font};<!--@endif-->">$1</p>');
+		content_input.val(n_value);
+	});
+
     editor['{$editor_sequence}'] = new toastui.Editor({
         el: document.querySelector('#toastui_instance_{$editor_sequence}'),
         height: '{$editor_height}px',
@@ -80,39 +91,6 @@
 			['table', 'code', 'codeblock']
 		],
 		plugins: [toastui.Editor.plugin.colorSyntax]
-		// customHTMLSanitizer: html => {
-		// 	console.log('san');
-		// 	console.log(html);
-		// 	return html;
-		// },
-		// customHTMLRenderer:  {
-		// 	heading(node, context) {
-		// 		console.log('heading');
-		// 		console.log(context);
-		// 		return {
-		// 			type: context.entering ? 'openTag' : 'closeTag',
-		// 			tagName: 'div',
-		// 			classNames: [`heading-'${node.level}`]
-		// 		}
-		// 	},
-		// 	text(node, context) {
-		// 		console.log('text');
-		// 		console.log(context);
-		// 		const strongContent = node.parent.type === 'strong';
-		// 		return {
-		// 			type: 'text',
-		// 			content: strongContent ? node.literal.toUpperCase() : node.literal
-		// 		}
-		// 	},
-		// 	linebreak(node, context) {
-		// 		console.log('heading');
-		// 		console.log(context);
-		// 		return {
-		// 			type: 'html',
-		// 			content: '\n<br />\n'
-		// 		}
-		// 	}
-		// }
     });
 
 	editor['{$editor_sequence}'].removeHook("addImageBlobHook");
@@ -188,8 +166,6 @@
 		var sel = window.getSelection();
 		sel.removeAllRanges();
 		sel.addRange(range);
-
-		console.log(content);
 		
         range.insertNode(range.createContextualFragment(content));
 		range.collapse(false);
