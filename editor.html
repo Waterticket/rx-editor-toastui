@@ -6,18 +6,26 @@
 
 <load target="../../tpl/js/editor_common.js" />
 <load target="../../../../common/xeicon/xeicon.min.css" />
+<load target="css/notifi.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css" />
 <link rel="stylesheet" type="text/css" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.css">
 <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css" />
 <style>
-	.ProseMirror.toastui-editor-contents p{
-		line-height: {$content_line_height};
-		font-size: {$content_font_size};
-		<!--@if($content_font)-->font-family: {$content_font};<!--@endif-->
-	}
+.ProseMirror.toastui-editor-contents p{
+	line-height: '{$content_line_height}';
+	font-size: '{$content_font_size}';
+}
 </style>
+<!--@if($content_font)-->
+<style>
+.ProseMirror.toastui-editor-contents p{
+	font-family: '{$content_font}';
+}
+</style>
+<!--@endif-->
+
 <div id="toastui_wrapper_{$editor_sequence}" class="rx_toastui_wrapper">
 	<div id="toastui_instance_{$editor_sequence}" class="rx_toastui {$colorset}"
         data-editor-sequence="{$editor_sequence}"
@@ -95,25 +103,43 @@
 
 	editor['{$editor_sequence}'].removeHook("addImageBlobHook");
 	editor['{$editor_sequence}'].addHook("addImageBlobHook", (blob, callback) => {
-        //   (async () => {
-        //     let formData = new FormData();
-        //     formData.append("file", blob);
+        const formData = new FormData();
+		formData.append('Filedata', blob);
+		formData.append('editor_sequence', '{$editor_sequence}');
+		formData.append('mid', '{Context::get("mid")}');
+		formData.append('act', 'procFileUpload');
 
-        //     axios.defaults.withCredentials = true;
-        //     const { data: url } = await axios.post(
-        //       `${backUrl}image.do`,
-        //       formData,
-        //       {
-        //         header: { "content-type": "multipart/formdata" },
-        //       }
-        //     );
-        //     callback(url, "alt text");
-        //   })();
+		$.notifi('파일을 업로드하는 중입니다.', {
+		  autoHideDelay: 3000,
+		  prependTo: '#toastui_wrapper_{$editor_sequence} .toastui-editor-main-container'
+		});
 
-		  alert('blob upload는 지원하지 않습니다');
-
-          return false;
-        });
+		$.ajax({
+			type: 'POST',
+			enctype: 'multipart/form-data',
+			url: '/',
+			data: formData,
+			dataType: 'json',
+			processData: false,
+			contentType: false,
+			cache: false,
+			timeout: 600000,
+			success: function(data) {
+				var url = data.download_url;
+				
+				reloadUploader('{$editor_sequence}');
+				callback(url, data.source_filename);
+			},
+			error: function(e) {
+				$.notifi('파일 업로드를 실패하였습니다. (' + (e.message) +')', {
+					autoHideDelay: 5000,
+					prependTo: '#toastui_wrapper_{$editor_sequence} .toastui-editor-main-container',
+					noticeClass: 'ntf-warning'
+				});
+				callback('image_load_fail', '이미지 업로드 실패 ');
+			}
+		});
+    });
 
     editor_selector['{$editor_sequence}'].focusout(function() {
         var editor_value = editor_selector['{$editor_sequence}'].find('.ProseMirror.toastui-editor-contents').html();
@@ -139,13 +165,6 @@
 			str = '<p>' + str + '</p>';
 		}
 		return str;
-	};
-
-    // Convert YouTube links.
-	var convertYouTube = function(str) {
-		var regexp = /https?:\/\/(www\.youtube(?:-nocookie)?\.com\/(?:watch\?v=|v\/|embed\/)|youtu\.be\/)([a-zA-Z0-9_-]+)\S*/g;
-		var embed = '<iframe width="560" height="315" src="https://www.youtube.com/embed/$2" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe><p></p>';
-		return String(str).replace(regexp, embed);
 	};
 
     // Insert content at cursor position.
@@ -188,8 +207,6 @@
 	};
 
     editor_selector['{$editor_sequence}'].bind('paste', function(event) {
-		return;
-
         var clipboard_data = (event.clipboardData || window.clipboardData || event.originalEvent.clipboardData);
         if (typeof clipboard_data !== 'undefined') {
             var content = clipboard_data.getData('text/html');
@@ -199,8 +216,9 @@
         } else {
             return;
         }
-        content = convertYouTube(simplifyContent(content));
+        content = simplifyContent(content);
         insertContent(editor['{$editor_sequence}'], content);
         event.preventDefault();
     });
 </script>
+<load target="js/notifi.js" />
