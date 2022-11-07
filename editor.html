@@ -1,4 +1,10 @@
 {@
+	$use_cdn = false;
+	if (str_contains($colorset, '_cdn')):
+		$colorset = str_replace('_cdn', '', $colorset);
+		$use_cdn = true;
+	endif;
+
 	if($colorset == 'auto'):
 		$colorset = (\Rhymix\Framework\UA::getColorScheme()) ?: $colorset;
 	endif;
@@ -7,11 +13,20 @@
 <load target="../../tpl/js/editor_common.js" />
 <load target="../../../../common/xeicon/xeicon.min.css" />
 <load target="css/notifi.css" />
+
+<!--@if($use_cdn)-->
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/toastui-editor.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.min.css" />
-<link rel="stylesheet" type="text/css" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.css">
 <link rel="stylesheet" href="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.min.css" />
 <link rel="stylesheet" href="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.css" />
+<!--@else-->
+<load target="css/toastui-editor-3.2.1.min.css" />
+<load target="css/toastui-editor-dark-3.2.1.min.css" />
+<load target="css/tui-color-picker-2.2.8.min.css" />
+<load target="css/toastui-editor-plugin-color-syntax-3.0.3.min.css" />
+<!--@endif-->
+<load target="css/tui-custom.css" />
+
 <style>
 .ProseMirror.toastui-editor-contents p{
 	line-height: '{$content_line_height}';
@@ -38,10 +53,18 @@
 	<!--@endif-->
 </div>
 <div id="editor"></div>
+<!--@if($use_cdn)-->
 <script src="https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js"></script>
 <script src="https://uicdn.toast.com/tui-color-picker/latest/tui-color-picker.js"></script>
 <script src="https://uicdn.toast.com/editor-plugin-color-syntax/latest/toastui-editor-plugin-color-syntax.min.js"></script>
 <script src="https://uicdn.toast.com/editor/latest/i18n/ko-kr.js"></script>
+<!--@else-->
+<load target="js/toastui-editor-3.2.1.min.js" />
+<load target="js/tui-color-picker-2.2.8.js" />
+<load target="js/toastui-editor-plugin-color-syntax-3.0.3.min.js" />
+<load target="js/i18n/ko-kr.js" />
+<!--@endif-->
+<script>var Editor = toastui.Editor;</script>
 <script>
 	var rx_colorset = '{$colorset}';
 	if(rx_colorset == 'auto')
@@ -85,7 +108,7 @@
 		content_input.val(n_value);
 	});
 
-    editor['{$editor_sequence}'] = new toastui.Editor({
+    editor['{$editor_sequence}'] = new Editor({
         el: document.querySelector('#toastui_instance_{$editor_sequence}'),
         height: '{$editor_height}px',
         initialValue: content_input.val(),
@@ -136,7 +159,7 @@
 					prependTo: '#toastui_wrapper_{$editor_sequence} .toastui-editor-main-container',
 					noticeClass: 'ntf-warning'
 				});
-				callback('image_load_fail', '이미지 업로드 실패 ');
+				callback('image_load_fail', '이미지 업로드 실패');
 			}
 		});
     });
@@ -220,5 +243,9 @@
         insertContent(editor['{$editor_sequence}'], content);
         event.preventDefault();
     });
+
+	// window.onbeforeunload = function() {
+	// 	return "저장되지 않은 변경사항이 있습니다. 정말 페이지를 떠나시겠습니까?";
+	// };
 </script>
 <load target="js/notifi.js" />

@@ -2,13 +2,13 @@
 <skin version="0.2">
 	<title xml:lang="ko">Toast UI Editor</title>
 	<description xml:lang="ko">Toast UI Editor</description>
-	<version>1.0.0</version>
-	<date>2021-08-21</date>
-	<author email_address="developers@naver.com" link="https://github.com/nhn/tui.editor">
-		<name xml:lang="ko">NHN</name>
-	</author>
+	<version>1.1.0</version>
+	<date>2022-11-07</date>
     <author email_address="matthew218@naver.com" link="https://shop.hoto.dev">
 		<name xml:lang="ko">Waterticket</name>
+	</author>
+	<author email_address="developers@naver.com" link="https://github.com/nhn/tui.editor">
+		<name xml:lang="ko">NHN</name>
 	</author>
 	<colorset>
 		<color name="auto">
@@ -19,6 +19,16 @@
 		</color>
         <color name="dark">
 			<title xml:lang="ko">dark</title>
+		</color>
+		
+		<color name="auto_cdn">
+			<title xml:lang="ko">auto (cdn)</title>
+		</color>
+		<color name="light_cdn">
+			<title xml:lang="ko">light (cdn)</title>
+		</color>
+        <color name="dark_cdn">
+			<title xml:lang="ko">dark (cdn)</title>
 		</color>
 	</colorset>
 </skin>
