@@ -131,6 +131,7 @@
 		formData.append('editor_sequence', '{$editor_sequence}');
 		formData.append('mid', '{Context::get("mid")}');
 		formData.append('act', 'procFileUpload');
+		formData.append('module_srl', '{Context::get("module_srl")}');
 
 		$.notifi('파일을 업로드하는 중입니다.', {
 		  autoHideDelay: 3000,
